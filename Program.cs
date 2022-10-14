@@ -1,6 +1,9 @@
-﻿using System.Configuration;
+﻿using System;
+using System.Configuration;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Text;
 using Azure.Storage.Queues; 
 using QueueMessage = Azure.Storage.Queues.Models.QueueMessage;
@@ -53,8 +56,9 @@ void log(string txt)
                 var t = Convert.FromBase64String(tmp);
                 string str = Encoding.Default.GetString(t);
                 log("Retrieved Message: "+str);
+                
 
-                if (SendAppAck(str))
+                if (AcknowledgeMessage(str))
                 {
                     log("Message AppAck sent");
                     queueClient.DeleteMessage(retrievedMessage[0].MessageId, retrievedMessage[0].PopReceipt); Console.WriteLine(str);
@@ -95,4 +99,44 @@ void log(string txt)
         catch { }
         return ret;
     }
+    bool AcknowledgeMessage(string message)
+    {
+        // Application Ack message needs to go through a different tcp connection
+        TcpClient outTcpClient = null;
+        NetworkStream outStream = null;
+        bool ret = false;
+        int port =Convert.ToInt32(ConfigurationManager.AppSettings["MpiAckTcpPort"]);
+        try
+        {
+            var appAckMessage = message;
+            log("Begin App Ack" + message);
+            if (!string.IsNullOrEmpty(appAckMessage))
+            {
+                var url = ConfigurationManager.AppSettings["MpiAckTcpAddress"];
+                IPAddress ipaddress = IPAddress.Parse(url);
+
+                var byteAppAckMessage = appAckMessage.ToArray<char>;
+                byte[] byteArray = Encoding.ASCII.GetBytes(appAckMessage);
+
+                outTcpClient = new TcpClient();
+                outTcpClient.Connect(new IPEndPoint(ipaddress, port));
+                outStream = outTcpClient.GetStream();
+                outStream.Write(byteArray, 0, appAckMessage.Length);
+                log("Sent AA Ack");
+                ret = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            log(ex.Message);
+
+        }
+        finally
+        {
+            outStream?.Close();
+            outTcpClient?.Close();
+        }
+        return ret;
+    }
+
 }
