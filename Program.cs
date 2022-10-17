@@ -121,6 +121,7 @@ void log(string txt)
                 byte[] byteArray = Encoding.ASCII.GetBytes(appAckMessage);
 
                 outTcpClient = new TcpClient();
+                log("Sending ACK to: " + url + ":" + port.ToString());
                 outTcpClient.Connect(new IPEndPoint(ipaddress, port));
                 outStream = outTcpClient.GetStream();
                 outStream.Write(byteArray, 0, appAckMessage.Length);
