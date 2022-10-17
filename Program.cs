@@ -10,13 +10,15 @@ using QueueMessage = Azure.Storage.Queues.Models.QueueMessage;
 
 
 
-
+Console.WriteLine("Ap statred");
 string QueueName = ConfigurationManager.AppSettings["QueueName"];
 ProcessMessages(QueueName);
+Console.WriteLine("Ap ended");
 
 void log(string txt)
 {
-    StreamWriter sw;
+    Console.WriteLine(DateTime.Now.ToString() + ": " + txt);
+/*    StreamWriter sw;
     string path = "LogOutput.txt";
     // This text is added only once to the file.
     if (!File.Exists(path))
@@ -30,7 +32,7 @@ void log(string txt)
     }
 
     sw.WriteLine(DateTime.Now.ToString()+": "+ txt);
-    sw.Close();
+    sw.Close();*/
 }
 
     void ProcessMessages(string queueName)
