@@ -10,6 +10,10 @@ using QueueMessage = Azure.Storage.Queues.Models.QueueMessage;
 
 
 
+
+
+
+
 Console.WriteLine("Ap statred");
 string QueueName = ConfigurationManager.AppSettings["QueueName"];
 ProcessMessages(QueueName);
@@ -116,7 +120,7 @@ void log(string txt)
             {
                 var url = ConfigurationManager.AppSettings["MpiAckTcpAddress"];
                 IPAddress ipaddress = IPAddress.Parse(url);
-
+                appAckMessage = $"{(char)0x0b}{appAckMessage}{(char)0x1C}{(char)0x0d}";
                 var byteAppAckMessage = appAckMessage.ToArray<char>;
                 byte[] byteArray = Encoding.ASCII.GetBytes(appAckMessage);
 
@@ -126,6 +130,7 @@ void log(string txt)
                 outStream = outTcpClient.GetStream();
                 outStream.Write(byteArray, 0, appAckMessage.Length);
                 log("Sent AA Ack");
+
                 ret = true;
             }
         }
